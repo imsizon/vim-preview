@@ -94,7 +94,7 @@ if(!exists('g:PreviewBrowsers'))
     if(system("uname") =~ "Darwin")
         let g:PreviewBrowsers    = 'open,safari,firefox,chromium-browser,epiphany,google-chrome,opera'
     else
-        let g:PreviewBrowsers    = 'firefox,safari,chromium-browser,epiphany,google-chrome,opera'
+        let g:PreviewBrowsers    = 'google-chrome,firefox,safari,chromium-browser,epiphany,opera'
     endif
 endif
 if(!exists('g:PreviewCSSPath'))

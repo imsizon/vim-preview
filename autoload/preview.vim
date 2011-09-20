@@ -30,7 +30,7 @@
 function! s:PreviewPythonSpawn(app, args)
     if has('python')
         python <<PYTH
-import os
+import os, vim
 app  = vim.eval('a:app')
 args = tuple(vim.eval('a:args '))
 os.spawnv(os.P_WAIT, app, (app,) + args)
@@ -209,20 +209,22 @@ class Preview
   end
 
   def wrap_html(body)
-    <<-END_OF_HTML
+    "
       <html>
         <head>
+          <meta http-equiv=\"Content-Type\" content=\"text/html;charset=UTF-8\">
           <title>#{@base_name}</title>
           #{css_tag}
           #{base_tag}
         </head>
         <body>
-          <div id="main-container">
-            #{body}
+         <div id=\"main-container\">
+    ".force_encoding("UTF-8") + body +
+    "
           <div>
         </body>
       </html>
-    END_OF_HTML
+    ".force_encoding("UTF-8")
   end
 
   def css_tag
