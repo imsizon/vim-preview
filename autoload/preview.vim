@@ -286,6 +286,9 @@ class Preview
         margin: 0px;
         border: solid #D0D0D0 1px;
       }
+      .line-through{
+        text-decoration:line-through;
+      }
     END_OF_CSS
   end
 end
