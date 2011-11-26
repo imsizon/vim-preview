@@ -2,10 +2,10 @@
 " File:        preview.vim
 " Description: Vim global plugin to preview markup files(markdown,rdoc,textile)
 " Author:      Sergey Potapov (aka Blake) <blake131313 AT gmail DOT com>
-" Version:     0.5
+" Version:     0.8
 " Homepage:    http://github.com/greyblake/vim-preview
 " License:     GPLv2+ -- look it up.
-" Copyright:   Copyright (C) 2010 Sergey Potapov (aka Blake)
+" Copyright:   Copyright (C) 2010-2011 Sergey Potapov (aka Blake)
 "
 "              This program is free software; you can redistribute it and/or
 "              modify it under the terms of the GNU General Public License as
@@ -22,23 +22,6 @@
 "              Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 "              MA 02111-1307 USA
 " ============================================================================
-
-
-
-
-" A hack to fork a process since ruby1.9 has a bug
-function! s:PreviewPythonSpawn(app, args)
-    if has('python')
-        python <<PYTH
-import os, vim
-app  = vim.eval('a:app')
-args = tuple(vim.eval('a:args '))
-os.spawnv(os.P_WAIT, app, (app,) + args)
-PYTH
-    else
-        echo "Can't preview. Seems you're using ruby1.9 and don't have a python installed"
-    endif
-endfunction
 
 
 function! s:load()
@@ -59,7 +42,8 @@ class Preview
     :textile_ext  => "g:PreviewTextileExt",
     :rdoc_ext     => "g:PreviewRdocExt",
     :ronn_ext     => "g:PreviewRonnExt",
-    :html_ext     => "g:PreviewHtmlExt"
+    :html_ext     => "g:PreviewHtmlExt",
+    :rst_ext      => "g:PreviewRstExt"
   }
 
   DEPENDECIES = {
@@ -67,7 +51,8 @@ class Preview
     :markdown => {:gem => 'bluecloth'    , :require => 'bluecloth'      },
     :textile  => {:gem => 'RedCloth'     , :require => 'redcloth'       },
     :rdoc     => {:gem => 'github-markup', :require => 'github/markup'  },
-    :ronn     => {:gem => 'ronn'         , :require => 'ronn'           }
+    :ronn     => {:gem => 'ronn'         , :require => 'ronn'           },
+    :rst      => {:gem => 'RbST'         , :require => 'rbst'           }
   }
 
   def show
@@ -117,6 +102,13 @@ class Preview
       wrap_html Ronn::Document.new(tmp_file.path).to_html
     end
   end
+
+  def show_rst
+    return unless load_dependencies(:rst)
+    show_with(:browser) do
+      wrap_html RbST.new(content).to_html
+    end
+  end
   
   private
 
@@ -127,11 +119,9 @@ class Preview
     app_path = which(app.split()[0])
     args = app.shellsplit()[1..-1] << fpath
     if app_path
-      begin
-        ruby_spawn(app_path, args)
-      rescue NoMethodError => err
-        python_spawn(app_path, args)
-      end
+      cmd = "#{app_path} #{args.shelljoin} &"
+      VIM.command "call system('#{cmd}')"
+      VIM.command "redraw"
     else
       error "any of apllications you specified in #{OPTIONS[app_type_to_opt(app_type)]} are not available"
     end
@@ -145,25 +135,6 @@ class Preview
     false
   end
   
-  def ruby_spawn(app, args)
-    # double fork to avoid zombies
-    child = fork do
-      grandchild = fork do
-        [STDOUT, STDERR].each { |io| io.reopen("/dev/null", "w") }
-        exec app, *args
-      end
-      Process.detach grandchild
-    end
-    # child terminates quickly, so block and reap
-    Process.wait child
-  end
-
-  def python_spawn(app, args)
-    args_str = args.map{|a| "'#{a}'"}.join(',')
-    params = "'#{app}', [#{args_str}]"
-    VIM.command "call s:PreviewPythonSpawn(#{params})"
-  end
-
   def update_fnames
     fname = VIM::Buffer.current.name
     @base_name = File.basename(fname)
@@ -333,6 +304,13 @@ ruby << END_OF_RUBY
 END_OF_RUBY
 endfunction
 
+function! preview#show_html()
+call s:init()
+ruby << END_OF_RUBY
+    Preview.instance.show_html
+END_OF_RUBY
+endfunction
+
 function! preview#show_ronn()
 call s:init()
 ruby << END_OF_RUBY
@@ -340,9 +318,9 @@ ruby << END_OF_RUBY
 END_OF_RUBY
 endfunction
 
-function! preview#show_html()
+function! preview#show_rst()
 call s:init()
 ruby << END_OF_RUBY
-    Preview.instance.show_html
+    Preview.instance.show_rst
 END_OF_RUBY
 endfunction

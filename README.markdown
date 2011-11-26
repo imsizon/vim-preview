@@ -51,6 +51,8 @@ I want to remind that \<Leader\> in most cases is "\\" key.
 
 ## Know bugs
 
+* In some cases vim can do fork if it uses ruby 1.9. To avoid this trouble fork is done via python.
+
 If you found a bug, please report it. Or better send me a pull request:)
 
 
@@ -67,6 +69,7 @@ If you found a bug, please report it. Or better send me a pull request:)
 * [Sung Pae](https://github.com/guns) - fixing bugs
 * [Steve Francia](https://github.com/spf13) - fixing bugs
 * [Rdark](https://github.com/rdark) - support for ronn file format
+* [Bertrand Cachet](https://github.com/bcachet) - return RST back
 
 
 ## License
